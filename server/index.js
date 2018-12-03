@@ -47,13 +47,19 @@ bot.hears('Favorites', (ctx) => {
         userID
     }).then((data) => {
         var arr = [];
-        if(data.length === 0) return false
+        if(data.length === 0) {
+            ctx.reply('The list of favorites is empty, to add new press add button', Markup
+            .keyboard([['Add'], ['Back']])
+            .oneTime()
+            .resize()
+            .extra());
+        }else {
         data.forEach((element) => {
             arr.push([`${element.text}`])
             favourites.push([`${element.text}`])
         });
         arr.push(['Add'], ['Remove'], ['Back'])
-        ctx.reply('text', Markup
+        ctx.reply('Favorites', Markup
             .keyboard(arr)
             .oneTime()
             .resize()
@@ -100,6 +106,7 @@ windSpeed: ${result.windSpeed}`;
                 
             }
         });
+    }
     }, (e) => console.log(e));  
 })
 
