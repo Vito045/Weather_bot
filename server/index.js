@@ -40,12 +40,52 @@ bot.start((ctx) => {
             .extra());
 });
 
+var action
+
+bot.hears('Add', (ctx) => {
+    action = 'add'
+    ctx.reply('Pls write down text you want add', Markup
+            .keyboard([
+                ['Back']
+            ])
+            .oneTime()
+            .resize()
+            .extra());//.then(() => {
+            //     bot.on('text', (ctx) => {
+            //         console.log(ctx.message.text)
+            //         geocodeAddress(ctx.message.text, (errorMessage, result) => {
+            //             if (errorMessage) {
+            //                 ctx.reply(errorMessage);
+            //             } else {
+            //                 userID = ctx.update.message.from.id;
+            //                 console.log('df')
+            //                 var favourite = new Text({
+            //                     text: result.short_name,
+            //                     userID
+            //                 })
+            //                 favourite.save().then((doc) => ctx.reply(`City ${doc.text} was successfuly added`, Markup
+            //                 .keyboard([
+            //                     ['Back']
+            //                 ])
+            //                 .oneTime()
+            //                 .resize()
+            //                 .extra()), (e) => console.log(e));
+            //             }
+            //         })
+            //     });
+            // });
+        
+    
+});
+
 bot.hears('Favorites', (ctx) => {
+    action = 'favourites'
     userID = ctx.update.message.from.id;
     var texts = '';
     Text.find({
         userID
     }).then((data) => {
+        favourites = [];
         var arr = [];
         if(data.length === 0) {
             ctx.reply('The list of favorites is empty, to add new press add button', Markup
@@ -63,64 +103,45 @@ bot.hears('Favorites', (ctx) => {
             .keyboard(arr)
             .oneTime()
             .resize()
-            .extra());
-        
-        bot.on('text', (ctx) => {
-            userID = ctx.update.message.from.id;
-            for (let i = 0; i < favourites.length; i++) {
-                if(favourites[i][0] === ctx.message.text) {
-                    Text.findOne({
-                        text: favourites[i][0],
-                        userID
-                    }).then((city) => {
+            .extra()).then(() => {
+                bot.on('text', (ctx) => {
+                    if(action === 'add') {
                         geocodeAddress(ctx.message.text, (errorMessage, result) => {
                             if (errorMessage) {
                                 ctx.reply(errorMessage);
                             } else {
-                                address = result.address
-                                getWeather(result.lat, result.lng, (errorMessage, result) => {
-                                    if (errorMessage) {
-                                        ctx.reply(errorMessage);
-                                    } else {
-                                        var text = `<strong>${address}</strong>
-Currently temperature: ${result.temperature}
-feels like: ${result.apparentTemperature}
-pressure: ${result.pressure}
-humidity: ${result.humidity}
-windSpeed: ${result.windSpeed}`;
-                                        ctx.reply(text, {
-                                            parse_mode: 'HTML'
-                                        }, Markup
+                                userID = ctx.update.message.from.id;
+                                var test = 0
+                                var favourite = new Text({
+                                    text: result.short_name,
+                                    userID
+                                })
+                                favourites.forEach((element, i) => {
+                                    if(element[0] === favourite.text) {
+                                        ctx.reply(`City ${favourite.text} already added`, Markup
                                         .keyboard([
                                             ['Back']
                                         ])
                                         .oneTime()
                                         .resize()
-                                        .extra());
+                                        .extra());  
+                                        test = 1
                                     }
                                 });
+                                if(test === 0) {
+                                    favourite.save().then((doc) => ctx.reply(`City ${doc.text} was successfuly added`, Markup
+                                .keyboard([
+                                    ['Back']
+                                ])
+                                .oneTime()
+                                .resize()
+                                .extra()), (e) => console.log(e));
+                                }
                             }
                         })
-                    });
-                }
-                
-            }
-        });
-    }
-    }, (e) => console.log(e));  
-})
-
-bot.hears('Remove', (ctx) => {
-    userID = ctx.update.message.from.id;
-    favourites.push(['Back'])
-    ctx.reply('Choose city you want delete', Markup
-        .keyboard(favourites)
-        .oneTime()
-        .resize()
-        .extra());
-    
-    bot.on('text', (ctx) => {
-        userID = ctx.update.message.from.id;
+                    }else if(action === 'remove'){
+                        var test = 0
+                        userID = ctx.update.message.from.id;
         for (let i = 0; i < favourites.length; i++) {
             if(favourites[i][0] === ctx.message.text) {
                 Text.findOneAndRemove({
@@ -132,11 +153,93 @@ bot.hears('Remove', (ctx) => {
                         .oneTime()
                         .resize()
                         .extra());
+                    test = 1
                 });
+                break
             }
-            
         }
-    });
+        if(test === 0) ctx.reply(`City ${ctx.message.text} not found`, Markup
+        .keyboard([['Back']])
+        .oneTime()
+        .resize()
+        .extra());
+        
+                    }else{
+                        userID = ctx.update.message.from.id;
+                        for (let i = 0; i < favourites.length; i++) {
+                            if(favourites[i][0] === ctx.message.text) {
+                                Text.findOne({
+                                    text: favourites[i][0],
+                                    userID
+                                }).then((city) => {
+                                    geocodeAddress(ctx.message.text, (errorMessage, result) => {
+                                        if (errorMessage) {
+                                            ctx.reply(errorMessage);
+                                        } else {
+                                            address = result.address
+                                            getWeather(result.lat, result.lng, (errorMessage, result) => {
+                                                if (errorMessage) {
+                                                    ctx.reply(errorMessage);
+                                                } else {
+                                                    var text = `<strong>${address}</strong>
+            Currently temperature: ${result.temperature}
+            feels like: ${result.apparentTemperature}
+            pressure: ${result.pressure}
+            humidity: ${result.humidity}
+            windSpeed: ${result.windSpeed}`;
+                                                    ctx.reply(text, {
+                                                        parse_mode: 'HTML'
+                                                    }, Markup
+                                                    .keyboard([
+                                                        ['Back']
+                                                    ])
+                                                    .oneTime()
+                                                    .resize()
+                                                    .extra());
+                                                }
+                                            });
+                                        }
+                                    })
+                                });
+                            }
+                            
+                        }
+                    }
+                    
+                });
+            });
+        
+        
+    }
+    }, (e) => console.log(e));  
+})
+
+bot.hears('Remove', (ctx) => {
+    action = 'remove'
+    userID = ctx.update.message.from.id;
+    ctx.reply('Choose city you want delete', Markup
+        .keyboard(favourites)
+        .oneTime()
+        .resize()
+        .extra());
+    // bot.on('text', (ctx) => {
+    //     userID = ctx.update.message.from.id;
+    //     for (let i = 0; i < favourites.length; i++) {
+    //         if(favourites[i][0] === ctx.message.text) {
+    //             Text.findOneAndRemove({
+    //                 text: favourites[i][0],
+    //                 userID
+    //             }).then((city) => {
+    //                 ctx.reply(`City ${city.text} was successfuly removed`, Markup
+    //                     .keyboard([['Back']])
+    //                     .oneTime()
+    //                     .resize()
+    //                     .extra());
+    //             });
+    //         }
+            
+    //     }
+    // });
 })
 
 bot.hears('Search', (ctx) => {
@@ -148,73 +251,36 @@ bot.hears('Search', (ctx) => {
             ])
             .oneTime()
             .resize()
-            .extra());
-    bot.on('text', (ctx) => {
-        //if(adding === false) {
-            geocodeAddress(ctx.message.text, (errorMessage, result) => {
-                if (errorMessage) {
-                    ctx.reply(errorMessage);
-                } else {
-                    address = result.address
-                    getWeather(result.lat, result.lng, (errorMessage, result) => {
-                        if (errorMessage) {
-                            ctx.reply(errorMessage);
-                        } else {
-                            var text = `<strong>${address}</strong>
-Currently temperature: ${result.temperature}
-feels like: ${result.apparentTemperature}
-pressure: ${result.pressure}
-humidity: ${result.humidity}
-windSpeed: ${result.windSpeed}`;
-                            ctx.reply(text, {
-                                parse_mode: 'HTML'
-                            });
-                        }
-                    });
-                }
-            })
-        //} else if(adding === true) {
-        //     geocodeAddress(ctx.message.text, (errorMessage, result) => {
-        //         if (errorMessage) {
-        //             ctx.reply(errorMessage);
-        //         } else {
-        //             userID = ctx.update.message.from.id;
-        //             console.log(result)
-        //             var favourite = new Text({
-        //                 text: result.short_name,
-        //                 userID
-        //             })
-        //             favourite.save().then((doc) => console.log(doc), (e) => console.log(e));
-        //         }
-        //     })
-        // }
-    });
-});
-bot.hears('Add', (ctx) => {
-    adding = true
-    ctx.reply('Pls write down text you want add', Markup
-            .keyboard([
-                ['Back']
-            ])
-            .oneTime()
-            .resize()
-            .extra());
+            .extra()).then(() => {
+                bot.on('text', (ctx) => {
+                    //if(adding === false) {
+                        geocodeAddress(ctx.message.text, (errorMessage, result) => {
+                            if (errorMessage) {
+                                ctx.reply(errorMessage);
+                            } else {
+                                address = result.address
+                                getWeather(result.lat, result.lng, (errorMessage, result) => {
+                                    if (errorMessage) {
+                                        ctx.reply(errorMessage);
+                                    } else {
+                                        var text = `<strong>${address}</strong>
+            Currently temperature: ${result.temperature}
+            feels like: ${result.apparentTemperature}
+            pressure: ${result.pressure}
+            humidity: ${result.humidity}
+            windSpeed: ${result.windSpeed}`;
+                                        ctx.reply(text, {
+                                            parse_mode: 'HTML'
+                                        });
+                                    }
+                                });
+                            }
+                        })
+                });
+            });
     
-    bot.on('text', (ctx) => {
-        geocodeAddress(ctx.message.text, (errorMessage, result) => {
-            if (errorMessage) {
-                ctx.reply(errorMessage);
-            } else {
-                userID = ctx.update.message.from.id;
-                var favourite = new Text({
-                    text: result.short_name,
-                    userID
-                })
-                favourite.save().then((doc) => ctx.reply(`City ${doc.text} was successfuly added`), (e) => console.log(e));
-            }
-        })
-    });
 });
+
 
 bot.hears('Back', (ctx) => {
     ctx.reply('Let\'s continue', Markup
