@@ -92,7 +92,45 @@ bot.hears('Favorites', (ctx) => {
             .keyboard([['Add'], ['Back']])
             .oneTime()
             .resize()
-            .extra());
+            .extra()).then(() => {
+                bot.on('text', (ctx) => {
+                    if(action === 'add') {
+                        geocodeAddress(ctx.message.text, (errorMessage, result) => {
+                            if (errorMessage) {
+                                ctx.reply(errorMessage);
+                            } else {
+                                userID = ctx.update.message.from.id;
+                                var test = 0
+                                var favourite = new Text({
+                                    text: result.short_name,
+                                    userID
+                                })
+                                favourites.forEach(element => {
+                                    if(element[0] === favourite.text) {
+                                        ctx.reply(`City ${favourite.text} already added`, Markup
+                                        .keyboard([
+                                            ['Back']
+                                        ])
+                                        .oneTime()
+                                        .resize()
+                                        .extra());  
+                                        test = 1
+                                    }
+                                });
+                                if(test === 0) {
+                                    favourite.save().then((doc) => ctx.reply(`City ${doc.text} was successfuly added`, Markup
+                                .keyboard([
+                                    ['Back']
+                                ])
+                                .oneTime()
+                                .resize()
+                                .extra()), (e) => console.log(e));
+                                }
+                            }
+                        })
+                    }
+                })
+            });
         }else {
         data.forEach((element) => {
             arr.push([`${element.text}`])
@@ -140,12 +178,28 @@ bot.hears('Favorites', (ctx) => {
                             }
                         })
                     }else if(action === 'remove'){
-                        var test = 0
+                        var test2 = 0
                         userID = ctx.update.message.from.id;
-        for (let i = 0; i < favourites.length; i++) {
-            if(favourites[i][0] === ctx.message.text) {
+        // for (let i = 0; i < favourites.length; i++) {
+        //     if(favourites[i][0] === ctx.message.text) {
+        //         Text.findOneAndRemove({
+        //             text: favourites[i][0],
+        //             userID
+        //         }).then((city) => {
+        //             ctx.reply(`City ${city.text} was successfuly removed`, Markup
+        //                 .keyboard([['Back']])
+        //                 .oneTime()
+        //                 .resize()
+        //                 .extra());
+        //             test = 1
+        //         });
+        //         break
+        //     }
+        // }
+        favourites.forEach(element => {
+            if(element[0] === ctx.message.text){
                 Text.findOneAndRemove({
-                    text: favourites[i][0],
+                    text: element[0],
                     userID
                 }).then((city) => {
                     ctx.reply(`City ${city.text} was successfuly removed`, Markup
@@ -153,16 +207,18 @@ bot.hears('Favorites', (ctx) => {
                         .oneTime()
                         .resize()
                         .extra());
-                    test = 1
-                });
-                break
+                })
+                test2 = 1
             }
-        }
-        if(test === 0) ctx.reply(`City ${ctx.message.text} not found`, Markup
-        .keyboard([['Back']])
-        .oneTime()
-        .resize()
-        .extra());
+        });
+        // favourite.forEach(element => {
+        //     console.log(element)
+        // });
+        if(test2 === 0) ctx.reply(`City ${ctx.message.text} not found`, Markup
+            .keyboard([['Back']])
+            .oneTime()
+            .resize()
+            .extra());
         
                     }else{
                         userID = ctx.update.message.from.id;
@@ -217,8 +273,13 @@ bot.hears('Favorites', (ctx) => {
 bot.hears('Remove', (ctx) => {
     action = 'remove'
     userID = ctx.update.message.from.id;
+    var swaper = []
+    favourites.forEach((element, i) => {
+        swaper.push(element)
+        if(i === favourites.length - 1) swaper.push(['Back'])
+    });
     ctx.reply('Choose city you want delete', Markup
-        .keyboard(favourites)
+        .keyboard(swaper)
         .oneTime()
         .resize()
         .extra());
