@@ -79,7 +79,6 @@ bot.hears('Add', (ctx) => {
 });
 
 bot.hears('Favorites', (ctx) => {
-    action = 'favourites'
     userID = ctx.update.message.from.id;
     var texts = '';
     Text.find({
@@ -142,6 +141,7 @@ bot.hears('Favorites', (ctx) => {
             .oneTime()
             .resize()
             .extra()).then(() => {
+                action = 'favorite'
                 bot.on('text', (ctx) => {
                     if(action === 'add') {
                         geocodeAddress(ctx.message.text, (errorMessage, result) => {
@@ -221,6 +221,7 @@ bot.hears('Favorites', (ctx) => {
             .extra());
         
                     }else{
+                        console.log(action)
                         userID = ctx.update.message.from.id;
                         for (let i = 0; i < favourites.length; i++) {
                             if(favourites[i][0] === ctx.message.text) {
@@ -228,6 +229,7 @@ bot.hears('Favorites', (ctx) => {
                                     text: favourites[i][0],
                                     userID
                                 }).then((city) => {
+                                    console.log(city)
                                     geocodeAddress(ctx.message.text, (errorMessage, result) => {
                                         if (errorMessage) {
                                             ctx.reply(errorMessage);
@@ -238,11 +240,11 @@ bot.hears('Favorites', (ctx) => {
                                                     ctx.reply(errorMessage);
                                                 } else {
                                                     var text = `<strong>${address}</strong>
-            Currently temperature: ${result.temperature}
-            feels like: ${result.apparentTemperature}
-            pressure: ${result.pressure}
-            humidity: ${result.humidity}
-            windSpeed: ${result.windSpeed}`;
+Currently temperature: ${result.temperature}
+feels like: ${result.apparentTemperature}
+pressure: ${result.pressure}
+humidity: ${result.humidity}
+windSpeed: ${result.windSpeed}`;
                                                     ctx.reply(text, {
                                                         parse_mode: 'HTML'
                                                     }, Markup
