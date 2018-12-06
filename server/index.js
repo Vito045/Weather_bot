@@ -327,11 +327,11 @@ bot.hears('Search', (ctx) => {
                                         ctx.reply(errorMessage);
                                     } else {
                                         var text = `<strong>${address}</strong>
-            Currently temperature: ${result.temperature}
-            feels like: ${result.apparentTemperature}
-            pressure: ${result.pressure}
-            humidity: ${result.humidity}
-            windSpeed: ${result.windSpeed}`;
+Currently temperature: ${result.temperature}
+feels like: ${result.apparentTemperature}
+pressure: ${result.pressure}
+humidity: ${result.humidity}
+windSpeed: ${result.windSpeed}`;
                                         ctx.reply(text, {
                                             parse_mode: 'HTML'
                                         });
