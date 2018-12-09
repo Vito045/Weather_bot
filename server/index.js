@@ -86,6 +86,7 @@ bot.hears('Favorites', (ctx) => {
     }).then((data) => {
         favourites = [];
         var arr = [];
+        action = 'favorites'
         if(data.length === 0) {
             ctx.reply('The list of favorites is empty, to add new press add button', Markup
             .keyboard([['Add'], ['Back']])
@@ -141,7 +142,6 @@ bot.hears('Favorites', (ctx) => {
             .oneTime()
             .resize()
             .extra()).then(() => {
-                action = 'favorite'
                 bot.on('text', (ctx) => {
                     if(action === 'add') {
                         geocodeAddress(ctx.message.text, (errorMessage, result) => {
@@ -220,8 +220,7 @@ bot.hears('Favorites', (ctx) => {
             .resize()
             .extra());
         
-                    }else{
-                        console.log(action)
+                    }else if (action === 'favorites'){
                         userID = ctx.update.message.from.id;
                         for (let i = 0; i < favourites.length; i++) {
                             if(favourites[i][0] === ctx.message.text) {
@@ -262,6 +261,36 @@ windSpeed: ${result.windSpeed}`;
                             }
                             
                         }
+                    }else if (action === 'search'){
+                        userID = ctx.update.message.from.id;
+                        geocodeAddress(ctx.message.text, (errorMessage, result) => {
+                            if (errorMessage) {
+                                ctx.reply(errorMessage);
+                            } else {
+                                address = result.address
+                                getWeather(result.lat, result.lng, (errorMessage, result) => {
+                                    if (errorMessage) {
+                                        ctx.reply(errorMessage);
+                                    } else {
+                                        var text = `<strong>${address}</strong>
+Currently temperature: ${result.temperature}
+feels like: ${result.apparentTemperature}
+pressure: ${result.pressure}
+humidity: ${result.humidity}
+windSpeed: ${result.windSpeed}`;
+                                        ctx.reply(text, {
+                                            parse_mode: 'HTML'
+                                        }, Markup
+                                        .keyboard([
+                                            ['Back']
+                                        ])
+                                        .oneTime()
+                                        .resize()
+                                        .extra());
+                                    }
+                                });
+                            }
+                        })
                     }
                     
                 });
@@ -306,6 +335,7 @@ bot.hears('Remove', (ctx) => {
 })
 
 bot.hears('Search', (ctx) => {
+    action = 'search'
     adding = false
     userID = ctx.update.message.from.id;
     ctx.reply('Pls. write down down city you want to find', Markup
@@ -334,7 +364,13 @@ humidity: ${result.humidity}
 windSpeed: ${result.windSpeed}`;
                                         ctx.reply(text, {
                                             parse_mode: 'HTML'
-                                        });
+                                        }, Markup
+                                        .keyboard([
+                                            ['Back']
+                                        ])
+                                        .oneTime()
+                                        .resize()
+                                        .extra());
                                     }
                                 });
                             }
@@ -501,4 +537,4 @@ app.listen(port, () => {
     console.log('Started on port', port);
 });
 
-bot.startPolling();
+bot.startPolling(); 
